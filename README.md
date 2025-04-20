@@ -20,22 +20,21 @@ Go library for parsing, validating, and converting ISBN numbers.
 go get github.com/GianniBYoung/simpleISBN
 ```
 
+## Usage
+
 1. Import it:
 
 ```go
-import simpleISBN "github.com/GianniBYoung/simpleISBN"
+import "github.com/GianniBYoung/simpleISBN"
 ```
 
 
 
 2. Create an Instance
 ```go
-isbn, err := simpleISBN.NewISBN(raw)
-if err != nil {
-    fmt.Println("Error:", err)
-    return
-}
+isbn, _ := simpleISBN.NewISBN("153432593X")
 
+fmt.Println(isbn.ISBN13Number)
 fmt.Println(isbn)
 ```
 
@@ -44,8 +43,10 @@ fmt.Println(isbn)
 testISBN10 := "153432593X"
 testISBN13 := "9781534325937"
 // 10 -> 13
-isbn_13, err := simpleISBN.ConvertISBN(testISBN10, ISBN13)
+isbn_13, _ := simpleISBN.ConvertISBN(testISBN10, simpleISBN.ISBN13)
 // 13 -> 10
-isbn_10, err := simpleISBN.ConvertISBN(testISBN13, ISBN10)
+isbn_10, _ := simpleISBN.ConvertISBN(testISBN13, simpleISBN.ISBN10)
+fmt.Println("Here is the ISBN-13: " + isbn_13)
+fmt.Println("Here is the ISBN-10: " + isbn_10)
 
 ```
