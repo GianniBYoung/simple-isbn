@@ -35,7 +35,7 @@ func NewISBN(input string) (*ISBN, error) {
 		isbn.InitialType = ISBN10
 		isbn.ISBN10Number = raw
 
-		alt, err := convertISBN(raw, ISBN13)
+		alt, err := ConvertISBN(raw, ISBN13)
 		if err != nil {
 			return nil, fmt.Errorf("converting %q → ISBN-13: %w", raw, err)
 		}
@@ -45,7 +45,7 @@ func NewISBN(input string) (*ISBN, error) {
 		isbn.InitialType = ISBN13
 		isbn.ISBN13Number = raw
 
-		alt, err := convertISBN(raw, ISBN10)
+		alt, err := ConvertISBN(raw, ISBN10)
 		if err != nil {
 			return nil, fmt.Errorf("converting %q → ISBN-10: %w", raw, err)
 		}
@@ -59,7 +59,7 @@ func NewISBN(input string) (*ISBN, error) {
 }
 
 // Converts an isbn number with out the `isbn-` prefix to ISBNtype `t`
-func convertISBN(raw string, toType ISBNType) (string, error) {
+func ConvertISBN(raw string, toType ISBNType) (string, error) {
 
 	switch toType {
 	case ISBN10:
