@@ -52,16 +52,22 @@ func TestConvertISBN(t *testing.T) {
 	}{
 		// ISBN10 -> ISBN13
 		{"0306406152", ISBN13, "9780306406157", false},
+		{"0307957896", ISBN13, "9780307957894", false},
+		{"153432593X", ISBN13, "9781534325937", false},
 		// ISBN13 -> ISBN10
 		{"9780306406157", ISBN10, "0306406152", false},
 		// invalid checksum converting to ISBN-13
 		{"1234567890", ISBN13, "", true},
 		// wrong prefix converting to ISBN-10
 		{"9791234567897", ISBN10, "", true},
+		// too short
+		{"997", ISBN10, "", true},
+		//too long
+		{"9976789998212444", ISBN10, "", true},
 	}
 
 	for _, tt := range tests {
-		got, err := convertISBN(tt.raw, tt.target)
+		got, err := ConvertISBN(tt.raw, tt.target)
 		if (err != nil) != tt.wantErr {
 			t.Errorf(
 				"convertISBN(%q, %v) error = %v; wantErr %v",
@@ -88,8 +94,18 @@ func TestNewISBN(t *testing.T) {
 	}{
 		{"0306406152", ISBN10, "0306406152", "9780306406157", false},
 		{"9780306406157", ISBN13, "0306406152", "9780306406157", false},
+
+		// Lovesick
+		{"153432593X", ISBN10, "153432593X", "9781534325937", false},
+		{"9781534325937", ISBN13, "153432593X", "9781534325937", false},
+
+		// Slewfoot
+		{"1250621992", ISBN10, "1250621992", "9781250621993", false},
+		{"9781250621993", ISBN13, "1250621992", "9781250621993", false},
+
 		{"invalid", "", "", "", true},
 		{"123456789012", "", "", "", true},
+		{"12345", "", "", "", true},
 	}
 
 	for _, tt := range tests {
