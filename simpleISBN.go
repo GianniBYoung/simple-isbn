@@ -24,8 +24,20 @@ type ISBN struct {
 
 // Takes an isbn10|13 and returns an `ISBN` struct
 func NewISBN(input string) (*ISBN, error) {
-	// normalize input: trim space, to lower, remove hyphens and "isbn" prefix
+	// normalize input
 	input = strings.TrimSpace(strings.ToLower(strings.ReplaceAll(input, "-", "")))
+	input = strings.ReplaceAll(input, ":", "")
+	input = strings.ReplaceAll(input, "=", "")
+	input = strings.ReplaceAll(input, " ", "")
+
+	lower := strings.ToLower(input)
+	prefixes := []string{"isbn10", "isbn13", "isbn13", "eisbn", "isbn"}
+	for _, p := range prefixes {
+		if strings.HasPrefix(lower, p) {
+			input = input[len(p):]
+			break
+		}
+	}
 	raw := strings.TrimPrefix(input, "isbn")
 	raw = strings.ToUpper(raw) // Upercase 'X' required for ISBN10 and ISBN13 only has digits
 
