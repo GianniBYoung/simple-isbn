@@ -27,6 +27,7 @@ func NewISBN(input string) (*ISBN, error) {
 	// normalize input: trim space, to lower, remove hyphens and "isbn" prefix
 	input = strings.TrimSpace(strings.ToLower(strings.ReplaceAll(input, "-", "")))
 	raw := strings.TrimPrefix(input, "isbn")
+	raw = strings.ToUpper(raw) // Upercase 'X' required for ISBN10 and ISBN13 only has digits
 
 	isbn := &ISBN{Raw: raw}
 
