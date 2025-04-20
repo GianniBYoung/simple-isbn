@@ -24,51 +24,35 @@ type ISBN struct {
 
 // Takes an isbn10|13 and returns an `ISBN` struct
 func NewISBN(input string) (*ISBN, error) {
-	isbn := &ISBN{}
-
-	// lowercase trim space and remove all hyphens
+	// normalize input: trim space, to lower, remove hyphens and "isbn" prefix
 	input = strings.TrimSpace(strings.ToLower(strings.ReplaceAll(input, "-", "")))
 	raw := strings.TrimPrefix(input, "isbn")
-	isbn.Raw = raw
 
-	isbnType := ISBN13
-	if len(raw) == 10 {
-		isbnType = ISBN10
+	isbn := &ISBN{Raw: raw}
+
+	switch len(raw) {
+	case 10:
+		isbn.InitialType = ISBN10
 		isbn.ISBN10Number = raw
-		// handle this error better
-		altISBN, err := convertISBN(raw, ISBN13)
-		isbn.ISBN13Number = altISBN
-		if err != nil {
-			return isbn, fmt.Errorf("Issue converting to alt isbn format")
-		}
 
-	} else {
+		alt, err := convertISBN(raw, ISBN10)
+		if err != nil {
+			return nil, fmt.Errorf("converting %q → ISBN-13: %w", raw, err)
+		}
+		isbn.ISBN13Number = alt
+
+	case 13:
+		isbn.InitialType = ISBN13
 		isbn.ISBN13Number = raw
-		altISBN, err := convertISBN(raw, ISBN10)
-		isbn.ISBN10Number = altISBN
+
+		alt, err := convertISBN(raw, ISBN13)
 		if err != nil {
-			return isbn, fmt.Errorf("Issue converting to alt isbn format")
+			return nil, fmt.Errorf("converting %q → ISBN-10: %w", raw, err)
 		}
-	}
+		isbn.ISBN10Number = alt
 
-	isbn.InitialType = isbnType
-
-	if len(raw) != 13 && isbnType == ISBN13 {
-		err := fmt.Errorf(
-			"Invalid ISBN, wrong number of digits:\ncount: %d\nvalue: %s",
-			len(raw),
-			raw,
-		)
-		return nil, err
-	}
-
-	if len(raw) != 10 && isbnType == ISBN10 {
-		err := fmt.Errorf(
-			"Invalid ISBN, wrong number of digits:\ncount: %d\nvalue: %s",
-			len(raw),
-			raw,
-		)
-		return nil, err
+	default:
+		return nil, fmt.Errorf("invalid ISBN length %d; must be 10 or 13", len(raw))
 	}
 
 	return isbn, nil
