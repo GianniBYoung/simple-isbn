@@ -35,7 +35,7 @@ func NewISBN(input string) (*ISBN, error) {
 		isbn.InitialType = ISBN10
 		isbn.ISBN10Number = raw
 
-		alt, err := convertISBN(raw, ISBN10)
+		alt, err := convertISBN(raw, ISBN13)
 		if err != nil {
 			return nil, fmt.Errorf("converting %q → ISBN-13: %w", raw, err)
 		}
@@ -45,7 +45,7 @@ func NewISBN(input string) (*ISBN, error) {
 		isbn.InitialType = ISBN13
 		isbn.ISBN13Number = raw
 
-		alt, err := convertISBN(raw, ISBN13)
+		alt, err := convertISBN(raw, ISBN10)
 		if err != nil {
 			return nil, fmt.Errorf("converting %q → ISBN-10: %w", raw, err)
 		}
@@ -59,32 +59,41 @@ func NewISBN(input string) (*ISBN, error) {
 }
 
 // Converts an isbn number with out the `isbn-` prefix to ISBNtype `t`
-func convertISBN(rawInput string, t ISBNType) (string, error) {
+func convertISBN(raw string, toType ISBNType) (string, error) {
 
-	switch t {
+	switch toType {
 	case ISBN10:
-		// take the first 9 digits, prefix "978", compute new check digit
-		base := "978" + rawInput[:9]
-		cd, err := isbn13CheckDigit(base)
+		// want ISBN‑10 → so input must be a 13‑digit ISBN‑13
+		if len(raw) != 13 {
+			return "", fmt.Errorf("cannot convert to ISBN-10: input length %d, want 13", len(raw))
+		}
+		if !strings.HasPrefix(raw, "978") {
+			return "", fmt.Errorf("cannot convert ISBN-13 %q → ISBN-10: prefix must be 978", raw)
+		}
+		core := raw[3:12]
+		cd := isbn10CheckDigit(core)
+		return core + cd, nil
+
+	case ISBN13:
+		// want ISBN‑13 → so input must be a 10‑digit ISBN‑10
+		if len(raw) != 10 {
+			return "", fmt.Errorf("cannot convert to ISBN-13: input length %d, want 10", len(raw))
+		}
+		// validate original ISBN-10 checksum
+		expected := isbn10CheckDigit(raw[:9])
+		actual := string(raw[9])
+		if expected != actual {
+			return "", fmt.Errorf("invalid ISBN-10 checksum: expected %q, got %q", expected, actual)
+		}
+		body := "978" + raw[:9]
+		cd, err := isbn13CheckDigit(body)
 		if err != nil {
 			return "", fmt.Errorf("computing ISBN-13 check digit: %w", err)
 		}
-		return base + cd, nil
-
-	case ISBN13:
-		if !strings.HasPrefix(rawInput, "978") {
-			return "", fmt.Errorf(
-				"cannot convert ISBN-13 %q → ISBN-10: prefix must be 978",
-				rawInput,
-			)
-		}
-		// drop the "978", take the next 9 digits, compute ISBN-10 check digit
-		body := rawInput[3:12]
-		cd := isbn10CheckDigit(body)
 		return body + cd, nil
 
 	default:
-		return "", fmt.Errorf("unknown ISBNType %q", t)
+		return "", fmt.Errorf("unknown target ISBNType %q", toType)
 	}
 }
 
